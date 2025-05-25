@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackEye Search</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100vw;
+            padding: 1rem; /* Base padding for all screens */
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 60rem;
+            height: auto;
+            background-color: #111827;
+            padding: 2rem; /* Adjusted padding for smaller screens */
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center; /* Center content within container */
+        }
+        @media (min-width: 768px) {
+            .container {
+                padding: 4rem; /* Larger padding for medium screens and up */
+            }
+        }
+        .logo-container {
+            margin-bottom: 0.05rem;
+        }
+        .title {
+            font-size: 2.5rem; /* Smaller base font size for title */
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        @media (min-width: 768px) {
+            .title {
+                font-size: 4.5rem; /* Larger title on desktop */
+            }
+        }
+        .subtitle {
+            font-size: 1rem; /* Smaller base font size for subtitle */
+            color: #9ca3af;
+            margin-bottom: 2rem; /* Adjusted margin */
+            max-width: 40rem;
+        }
+        @media (min-width: 768px) {
+            .subtitle {
+                font-size: 1.25rem; /* Larger subtitle on desktop */
+                margin-bottom: 2.5rem;
+            }
+        }
+        .search-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .search-input {
+            width: 100%;
+            max-width: 30rem; /* Adjusted max-width for input */
+            padding: 0.8rem 1.2rem; /* Adjusted padding */
+            font-size: 1rem; /* Adjusted font size */
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 9999px;
+            outline: none;
+            color: #ffffff;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+        .search-input::placeholder {
+            color: #6b7280;
+        }
+        .search-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
+        }
+        .search-button {
+            margin-top: 1.5rem; /* Adjusted margin */
+            padding: 0.9rem 2rem; /* Adjusted padding */
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease-in-out;
+            transform: scale(1);
+            outline: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem; /* Adjusted font size */
+        }
+        .search-button:hover {
+            background-color: #1d4ed8;
+            transform: scale(1.05);
+        }
+        .search-button:focus {
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.75);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#333333" stroke="#555555" stroke-width="2"/>
+                <circle cx="50" cy="50" r="35" fill="#222222" stroke="#444444" stroke-width="2"/>
+                <circle cx="50" cy="50" r="25" fill="#111111" stroke="#333333" stroke-width="2"/>
+                <circle cx="50" cy="50" r="12" fill="#007bff"/> <circle cx="53" cy="47" r="3" fill="#ffffff" opacity="0.7"/> <path d="M35 50 C40 40, 60 40, 65 50 C60 60, 40 60, 35 50 Z" fill="none" stroke="#e0e0e0" stroke-width="2"/> </svg>
+        </div>
+        
+        <h1 class="title">BlackEye</h1>
+        <p class="subtitle">Your gateway to the hidden web.</p>
+
+        <form action="/search" method="GET" class="search-form">
+            <input 
+                type="text" 
+                name="q" 
+                class="search-input" 
+                placeholder="Search BlackEye..." 
+                value="{{ query if query is not none else '' }}"
+            >
+            <button 
+                type="submit" 
+                class="search-button"
+            >
+                Search
+            </button>
+        </form>
+    </div>
+</body>
+</html>

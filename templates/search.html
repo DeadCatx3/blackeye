@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackEye Search Results</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+            margin: 0;
+        }
+        .search-bar-container {
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #333333;
+            padding: 0.75rem 0; /* Adjusted padding */
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search-bar-content {
+            width: 100%;
+            max-width: 72rem;
+            display: flex;
+            align-items: center;
+            padding-left: 0.75rem; /* Adjusted padding */
+            padding-right: 0.75rem; /* Adjusted padding */
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+            justify-content: center; /* Center items when wrapped */
+        }
+        .logo-link {
+            flex-shrink: 0;
+            margin-right: 0.5rem; /* Adjusted margin */
+        }
+        .main-title {
+            font-size: 1.5rem; /* Smaller base font size */
+            font-weight: 700;
+            color: #ffffff;
+            margin-right: 1rem; /* Adjusted margin */
+            display: none; /* Hidden by default on small screens */
+        }
+        @media (min-width: 640px) {
+            .main-title {
+                display: block; /* Show on small screens and up */
+            }
+        }
+        .search-form {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            gap: 0.5rem;
+            max-width: 45rem;
+            margin-top: 0.5rem; /* Add margin for stacking on small screens */
+            width: 100%; /* Ensure form takes full width when wrapped */
+        }
+        @media (min-width: 640px) {
+            .search-form {
+                margin-top: 0; /* Remove margin when not stacked */
+                width: auto; /* Allow form to shrink on larger screens */
+            }
+        }
+        .search-input-container {
+            flex-grow: 1;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1rem; /* Adjusted padding */
+            background-color: #2c2c2c;
+            border: 1px solid #444444;
+            border-radius: 9999px;
+            color: #e0e0e0;
+            font-size: 0.9rem; /* Adjusted font size */
+            outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .search-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+        .search-button-outside {
+            background-color: #2563eb;
+            border: none;
+            border-radius: 9999px;
+            padding: 0.6rem 1rem; /* Adjusted padding */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .search-button-outside:hover {
+            background-color: #1d4ed8;
+        }
+        .search-button-outside svg {
+            width: 1.25rem; /* Adjusted icon size */
+            height: 1.25rem; /* Adjusted icon size */
+            color: #ffffff;
+        }
+
+        .main-content {
+            max-width: 72rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1rem;
+        }
+        .results-info {
+            color: #9ca3af;
+            margin-bottom: 1rem; /* Adjusted margin */
+            font-size: 1rem; /* Adjusted font size */
+        }
+        @media (min-width: 640px) {
+            .results-info {
+                font-size: 1.25rem; /* Larger font on larger screens */
+                margin-bottom: 1.5rem;
+            }
+        }
+        .result-card {
+            background-color: #1a1a1a;
+            border-radius: 0.75rem;
+            padding: 1.25rem; /* Adjusted padding */
+            margin-bottom: 1rem; /* Adjusted margin */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease-in-out;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+        .result-title {
+            font-size: 1.25rem; /* Adjusted font size */
+            font-weight: 600;
+            color: #8ab4f8;
+            text-decoration: none;
+            margin-bottom: 0.4rem; /* Adjusted margin */
+            display: block;
+        }
+        @media (min-width: 640px) {
+            .result-title {
+                font-size: 1.5rem; /* Larger font on larger screens */
+            }
+        }
+        .result-url {
+            color: #90ee90;
+            font-size: 0.8rem; /* Adjusted font size */
+            margin-bottom: 0.6rem; /* Adjusted margin */
+            word-break: break-all;
+        }
+        .result-content {
+            color: #b0b0b0;
+            font-size: 0.9rem; /* Adjusted font size */
+            line-height: 1.6;
+        }
+        .pagination {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically on small screens */
+            align-items: center;
+            margin-top: 2rem; /* Adjusted margin */
+            margin-bottom: 1.5rem; /* Adjusted margin */
+        }
+        .pagination-links-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.75rem; /* Adjusted margin */
+            flex-wrap: wrap; /* Allow links to wrap */
+            max-width: 100%; /* Ensure it doesn't overflow parent */
+        }
+        .pagination-link {
+            display: inline-block;
+            padding: 0.6rem 1rem; /* Adjusted padding */
+            text-decoration: none;
+            color: #007bff;
+            border: 1px solid #007bff;
+            margin: 0.3rem; /* Adjusted margin */
+            border-radius: 0.5rem;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.9rem; /* Adjusted font size */
+            flex-shrink: 0; /* Prevent shrinking on small screens */
+            box-sizing: border-box; /* Include padding and border in element's total width */
+        }
+        .pagination-link:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .pagination-link.disabled {
+            color: #666666;
+            border-color: #444444;
+            pointer-events: none;
+            cursor: default;
+            background-color: #222222;
+        }
+        .pagination-info {
+            padding: 0.6rem 1rem; /* Adjusted padding */
+            margin: 0.3rem; /* Adjusted margin */
+            color: #e0e0e0;
+            font-size: 0.9rem; /* Adjusted font size */
+        }
+        /* New styles to limit the number of visible page numbers */
+        .page-numbers-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            max-width: 80%; /* Adjust as needed */
+            overflow: hidden; /* Hide overflow if too many pages */
+            margin: 0.5rem 0; /* Space above/below */
+        }
+        .page-number-item {
+            margin: 0.3rem;
+            flex-shrink: 0;
+        }
+        .page-input-form {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap; /* Allow input form elements to wrap */
+            justify-content: center; /* Center elements when wrapped */
+            margin-top: 0.5rem; /* Add margin for spacing when stacked */
+        }
+        .page-input-label {
+            color: #9ca3af;
+            margin-right: 0.25rem; /* Adjusted margin */
+            font-size: 0.9rem; /* Adjusted font size */
+        }
+        .page-input {
+            width: 60px; /* Adjusted width */
+            padding: 0.4rem; /* Adjusted padding */
+            background-color: #2c2c2c;
+            border: 1px solid #444444;
+            border-radius: 0.5rem;
+            color: #e0e0e0;
+            text-align: center;
+            margin-right: 0.25rem; /* Adjusted margin */
+            font-size: 0.9rem; /* Adjusted font size */
+        }
+        .go-button {
+            padding: 0.4rem 0.8rem; /* Adjusted padding */
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            font-size: 0.9rem; /* Adjusted font size */
+        }
+        .go-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-bar-container">
+        <div class="search-bar-content">
+            <a href="/" class="logo-link">
+                <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="45" fill="#333333" stroke="#555555" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="35" fill="#222222" stroke="#444444" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="25" fill="#111111" stroke="#333333" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="12" fill="#007bff"/> <circle cx="53" cy="47" r="3" fill="#ffffff" opacity="0.7"/> <path d="M35 50 C40 40, 60 40, 65 50 C60 60, 40 60, 35 50 Z" fill="none" stroke="#e0e0e0" stroke-width="2"/> </svg>
+            </a>
+            <h1 class="main-title">BlackEye</h1>
+
+            <form action="/search" method="GET" class="search-form">
+                <div class="search-input-container">
+                    <input
+                        type="text"
+                        name="q"
+                        class="search-input"
+                        placeholder="Search BlackEye..."
+                        value="{{ query if query is not none else '' }}"
+                    >
+                </div>
+                <button type="submit" class="search-button-outside">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <p class="results-info">About {{ total_results }} results for "{{ query }}"</p>
+
+        <div class="results">
+            {% if results %}
+                {% for result in results %}
+                    <div class="result-card">
+                        <a href="{{ result.url }}" class="result-title" target="_blank" rel="noopener noreferrer">{{ result.title }}</a>
+                        <div class="result-url">{{ result.url }}</div>
+                        <div class="result-content">{{ result.content[:256] }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-gray-500 text-lg">No results found for "{{ query }}". Try a different search.</p>
+            {% endif %}
+        </div>
+
+        <div class="pagination">
+            {% if total_pages > 1 %}
+                <div class="pagination-links-container">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('search', q=query, page=page - 1, filter_nsfw=filter_nsfw)}}" class="pagination-link">Previous</a>
+                    {% else %}
+                        <a href="#" class="pagination-link disabled">Previous</a>
+                    {% endif %}
+
+                    <div class="page-numbers-container">
+                        {% set num_links_to_show = 5 %}
+                        {% set start_page = (page - (num_links_to_show // 2)) | int %}
+                        {% set end_page = (page + (num_links_to_show // 2)) | int %}
+
+                        {% if start_page < 1 %}
+                            {% set start_page = 1 %}
+                            {% set end_page = min(num_links_to_show, total_pages) %}
+                        {% endif %}
+                        {% if end_page > total_pages %}
+                            {% set end_page = total_pages %}
+                            {% set start_page = max(1, total_pages - num_links_to_show + 1) %}
+                        {% endif %}
+
+                        {% if start_page > 1 %}
+                            <a href="{{ url_for('search', q=query, page=1, filter_nsfw=filter_nsfw) }}" class="pagination-link page-number-item">1</a>
+                            {% if start_page > 2 %}
+                                <span class="pagination-info page-number-item">...</span>
+                            {% endif %}
+                        {% endif %}
+
+                        {% for p in range(start_page, end_page + 1) %}
+                            {% if p == page %}
+                                <span class="pagination-info page-number-item">Current: {{ p }}</span>
+                            {% else %}
+                                <a href="{{ url_for('search', q=query, page=p, filter_nsfw=filter_nsfw)}}" class="pagination-link page-number-item">{{ p }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if end_page < total_pages %}
+                            {% if end_page < total_pages - 1 %}
+                                <span class="pagination-info page-number-item">...</span>
+                            {% endif %}
+                            <a href="{{ url_for('search', q=query, page=total_pages, filter_nsfw=filter_nsfw) }}" class="pagination-link page-number-item">{{ total_pages }}</a>
+                        {% endif %}
+                    </div>
+
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('search', q=query, page=page + 1, filter_nsfw=filter_nsfw)}}" class="pagination-link">Next</a>
+                    {% else %}
+                        <a href="#" class="pagination-link disabled">Next</a>
+                    {% endif %}
+                </div>
+
+                <form action="{{ url_for('search') }}" method="GET" class="page-input-form">
+                    <input type="hidden" name="q" value="{{ query }}">
+                    <input type="hidden" name="filter_nsfw" value="{{ 'on' if filter_nsfw else '' }}">
+                    <label for="page_input" class="page-input-label">Go to page:</label>
+                    <input type="number" id="page_input" name="page"
+                           class="page-input"
+                           min="1" max="{{ total_pages }}" value="{{ page }}">
+                    <button type="submit" class="go-button">Go</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

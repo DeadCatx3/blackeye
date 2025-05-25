@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crawled Sites</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            margin: 20px;
+        }
+        h1 {
+            color: #00ffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .site-list {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        .site-item {
+            border-bottom: 1px solid #333;
+            padding: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .site-item:last-child {
+            border-bottom: none;
+        }
+        .site-item strong {
+            color: #00ccff;
+        }
+        .site-item span {
+            margin-left: 10px;
+            color: #ccc;
+        }
+        .site-item a {
+            color: #00ffff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .site-item a:hover {
+            text-decoration: underline;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+            display: flex; /* Make it a flex container */
+            flex-wrap: wrap; /* Allow items to wrap */
+            justify-content: center; /* Center items */
+            gap: 5px; /* Add some space between items */
+        }
+        .pagination a, .pagination span {
+            color: #00ffff;
+            padding: 8px 12px;
+            text-decoration: none;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .pagination a:hover {
+            background-color: #00ffff;
+            color: #1a1a1a;
+        }
+        .pagination span.current {
+            background-color: #00ffff;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+        .back-link {
+            display: block;
+            margin-top: 30px;
+            text-align: center;
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crawled Sites ({{ total_sites }} total)</h1>
+
+    {% if crawled_sites %}
+        <div class="site-list">
+            {% for site in crawled_sites %}
+                <div class="site-item">
+                    <div>
+                        <strong>URL:</strong> <a href="{{ site.url }}" target="_blank">{{ site.url }}</a><br>
+                        <strong>Last Checked:</strong> <span>{{ site.last_checked }}</span><br>
+                        <strong>Response Time:</strong> <span>{{ "%.2f" % site.response_time }}s</span><br>
+                        <strong>Status:</strong> <span>{{ site.status }}</span><br>
+                        <strong>Result:</strong> <span>{{ site.result }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('crawled_sites', page=page-1) }}">Previous</a>
+            {% endif %}
+
+            {% set num_links_to_show = 5 %}
+            {% set start_page = (page - (num_links_to_show // 2)) | int %}
+            {% set end_page = (page + (num_links_to_show // 2)) | int %}
+
+            {% if start_page < 1 %}
+                {% set start_page = 1 %}
+                {% set end_page = min(num_links_to_show, total_pages) %}
+            {% endif %}
+            {% if end_page > total_pages %}
+                {% set end_page = total_pages %}
+                {% set start_page = max(1, total_pages - num_links_to_show + 1) %}
+            {% endif %}
+
+            {% if start_page > 1 %}
+                <a href="{{ url_for('crawled_sites', page=1) }}">1</a>
+                {% if start_page > 2 %}
+                    <span>...</span>
+                {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                    <span class="current">{{ p }}</span>
+                {% else %}
+                    <a href="{{ url_for('crawled_sites', page=p) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                    <span>...</span>
+                {% endif %}
+                <a href="{{ url_for('crawled_sites', page=total_pages) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('crawled_sites', page=page+1) }}">Next</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>No sites have been crawled yet.</p>
+    {% endif %}
+
+    <a href="/" class="back-link">Back to Home</a>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indexed Links</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            margin: 20px;
+        }
+        h1 {
+            color: #00ffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .link-list {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        .link-item {
+            border-bottom: 1px solid #333;
+            padding: 10px 0;
+        }
+        .link-item:last-child {
+            border-bottom: none;
+        }
+        .link-item strong {
+            color: #00ccff;
+        }
+        .link-item a {
+            color: #00ffff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .link-item a:hover {
+            text-decoration: underline;
+        }
+        .link-item p {
+            margin: 5px 0;
+            color: #ccc;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+            display: flex; /* Make it a flex container */
+            flex-wrap: wrap; /* Allow items to wrap */
+            justify-content: center; /* Center items */
+            gap: 5px; /* Add some space between items */
+        }
+        .pagination a, .pagination span {
+            color: #00ffff;
+            padding: 8px 12px;
+            text-decoration: none;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .pagination a:hover {
+            background-color: #00ffff;
+            color: #1a1a1a;
+        }
+        .pagination span.current {
+            background-color: #00ffff;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+        .back-link {
+            display: block;
+            margin-top: 30px;
+            text-align: center;
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Indexed Links ({{ total_links }} total)</h1>
+
+    {% if indexed_links %}
+        <div class="link-list">
+            {% for link in indexed_links %}
+                <div class="link-item">
+                    <strong>Title:</strong> {{ link.title if link.title else 'N/A' }}<br>
+                    <strong>URL:</strong> <a href="{{ link.url }}" target="_blank">{{ link.url }}</a><br>
+                    <p><strong>Content Snippet:</strong> {{ link.content[:256] }}...</p>
+                    <p><strong>Date:</strong> {{ link.date if link.date else 'N/A' }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('indexed_links', page=page-1) }}">Previous</a>
+            {% endif %}
+
+            {% set num_links_to_show = 5 %}
+            {% set start_page = (page - (num_links_to_show // 2)) | int %}
+            {% set end_page = (page + (num_links_to_show // 2)) | int %}
+
+            {% if start_page < 1 %}
+                {% set start_page = 1 %}
+                {% set end_page = min(num_links_to_show, total_pages) %}
+            {% endif %}
+            {% if end_page > total_pages %}
+                {% set end_page = total_pages %}
+                {% set start_page = max(1, total_pages - num_links_to_show + 1) %}
+            {% endif %}
+
+            {% if start_page > 1 %}
+                <a href="{{ url_for('indexed_links', page=1) }}">1</a>
+                {% if start_page > 2 %}
+                    <span>...</span>
+                {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                    <span class="current">{{ p }}</span>
+                {% else %}
+                    <a href="{{ url_for('indexed_links', page=p) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                    <span>...</span>
+                {% endif %}
+                <a href="{{ url_for('indexed_links', page=total_pages) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('indexed_links', page=page+1) }}">Next</a>
+            {% else %}
+                <a href="#" class="pagination-link disabled">Next</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>No links have been indexed yet.</p>
+    {% endif %}
+
+    <a href="/" class="back-link">Back to Home</a>
+</body>
+</html>
