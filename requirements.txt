@@ -1,0 +1,7 @@
+aiohttp
+requests
+beautifulsoup4
+colorama
+nltk
+stem
+Flask
