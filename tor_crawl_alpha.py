@@ -14,25 +14,23 @@ import threading
 import time
 import sqlite3
 from bs4 import BeautifulSoup
-from collections import defaultdict, deque # Import deque
+from collections import defaultdict, deque
 from colorama import Fore, Style, init
 from copy import deepcopy
 from datetime import datetime
 from nltk.corpus import stopwords
 from stem import Signal
 from stem.control import Controller
-from urllib.parse import urlparse, urlunparse, quote, unquote # Import unquote
+from urllib.parse import urlparse, urlunparse, quote, unquote
 
 from flask import Flask, render_template, request
 from math import ceil
 
-# Initialize colorama for colorful console output
+
 init(autoreset=True)
 
-# Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# ANSI escape sequences for custom RGB colors
 MAGENTA = "\033[38;2;127;255;212m"
 CORAL = "\033[38;2;244;164;96m"
 CYAN = "\033[38;2;135;206;235m"
@@ -42,14 +40,11 @@ BLUE = "\033[38;2;70;130;180m"
 RED = "\033[38;2;240;128;128m"
 RESET = "\033[0m"
 
-# Define a list of NSFW keywords (can be expanded)
-# These keywords are case-insensitive for filtering purposes.
 NSFW_KEYWORDS = [
     "quantum miner","Bitcoin Quantum Miner", "dt6dt", "jfif","Free Bitcoin", "Free Bitcoins", "Bitcoin Generator", "bitcoin generator", "jfif c c u", "png ihdr", "Bitcoin Walet Market", "bitcoin walet market", "deephole", "jfif creator gd jpeg", "double","sex", "nude", "erotic", "xxx", "kid", "explicit", "son", "baby", "daughter", "censoredporn", "preteen",
     "gore", "violence", "bloody", "murder", "rape", "abuse", "child", "mom", "dad", "incest", "jailbait", "pedo", "young", "teen", "girl", "boy", "porn", "censoredPorn", "loli"
 ]
 
-# SQLite Database Manager
 class SQLiteManager:
     def __init__(self, db_name='tor_search.db'):
         self.db_name = db_name
@@ -142,7 +137,7 @@ class SQLiteManager:
                 return cursor.fetchone()
             if fetch_all:
                 return cursor.fetchall()
-            return cursor.lastrowid # For INSERT operations
+            return cursor.lastrowid 
         except sqlite3.Error as e:
             print(f"{RED}❗ SQLite query error: {e} | Query: {query} | Params: {params}{RESET}")
             return None
@@ -159,7 +154,7 @@ class TorSession:
         self.controller = None
     def connect(self):
         attempt = 0
-        while self.session is None and attempt < 5:  # Retry connection up to 5 times
+        while self.session is None and attempt < 5:
             try:
                 self.controller = Controller.from_port(port=self.port)
                 if self.tor_password:
@@ -180,12 +175,12 @@ class TorSession:
             except Exception as e:
                 print(f"{RED}❗ Error: Failed to connect to TOR on port {self.port}: {e}{RESET}")
                 attempt += 1
-                self.controller = None  # Reset controller on failure
-                time.sleep(5)  # Wait before retrying
+                self.controller = None 
+                time.sleep(5) 
 
     def _session_is_valid(self):
         try:
-            test_url = "http://example.com"  # Use a known-working onion URL
+            test_url = "http://example.com"
             response = self.session.get(test_url, timeout=75)
             return response.status_code == 200
         except:
@@ -209,7 +204,6 @@ class LinkIndexManager:
         self.db_manager = db_manager
 
     def insert_link(self, url, content, title=None, date=None, metadata=None):
-        """Inserts a new link or updates an existing one, returning its ID."""
         existing_link = self.db_manager._execute_query(
             "SELECT id FROM links WHERE url = ?", (url,), fetch_one=True
         )
@@ -233,21 +227,18 @@ class LinkIndexManager:
             return doc_id
 
     def get_link_id(self, url):
-        """Retrieves the ID of a link by its URL."""
         result = self.db_manager._execute_query(
             "SELECT id FROM links WHERE url = ?", (url,), fetch_one=True
         )
         return result['id'] if result else None
 
     def get_all_links(self):
-        """Fetches all links from the database."""
         links_data = self.db_manager._execute_query(
             "SELECT id, url, content, title, date, metadata FROM links", fetch_all=True
         )
         return [dict(link) for link in links_data] if links_data else []
 
     def get_link_by_id(self, link_id):
-        """Fetches a single link by its ID."""
         link_data = self.db_manager._execute_query(
             "SELECT id, url, content, title, date, metadata FROM links WHERE id = ?", (link_id,), fetch_one=True
         )
@@ -258,7 +249,6 @@ class ReverseContentIndexManager:
         self.db_manager = db_manager
 
     def update_reverse_index(self, doc_id, term, positions):
-        """Updates or inserts term positions for a given document."""
         positions_json = json.dumps(positions)
         self.db_manager._execute_query(
             "INSERT OR REPLACE INTO reverse_index (term, doc_id, positions) VALUES (?, ?, ?)",
@@ -267,7 +257,6 @@ class ReverseContentIndexManager:
         print(f"{BLUE}🔍 Reverse index updated for term '{term}' in document ID: {doc_id}{RESET}")
 
     def get_positions_for_term_doc(self, term, doc_id):
-        """Retrieves positions for a specific term in a specific document."""
         result = self.db_manager._execute_query(
             "SELECT positions FROM reverse_index WHERE term = ? AND doc_id = ?",
             (term, doc_id), fetch_one=True
@@ -275,7 +264,6 @@ class ReverseContentIndexManager:
         return json.loads(result['positions']) if result and result['positions'] else []
 
     def get_docs_for_term(self, term):
-        """Retrieves all documents associated with a given term."""
         results = self.db_manager._execute_query(
             "SELECT doc_id, positions FROM reverse_index WHERE term = ?",
             (term,), fetch_all=True
@@ -283,7 +271,6 @@ class ReverseContentIndexManager:
         return {row['doc_id']: json.loads(row['positions']) for row in results} if results else {}
 
     def get_all_terms(self):
-        """Retrieves all unique terms from the reverse index."""
         results = self.db_manager._execute_query(
             "SELECT DISTINCT term FROM reverse_index", fetch_all=True
         )
@@ -294,7 +281,6 @@ class LinkRelationshipManager:
         self.db_manager = db_manager
 
     def add_relationship(self, from_url, to_url):
-        """Adds a link relationship."""
         self.db_manager._execute_query(
             "INSERT OR IGNORE INTO link_relationships (from_url, to_url) VALUES (?, ?)",
             (from_url, to_url)
@@ -302,7 +288,6 @@ class LinkRelationshipManager:
         print(f"{CYAN}🔗 Relationship added: {from_url} -> {to_url}{RESET}")
 
     def get_relationships_from(self, from_url):
-        """Gets all links that a given URL points to."""
         results = self.db_manager._execute_query(
             "SELECT to_url FROM link_relationships WHERE from_url = ?", (from_url,), fetch_all=True
         )
@@ -319,32 +304,28 @@ class LinkCrawler(threading.Thread):
         self.depth = depth
         self.retries = retries
 
-        # Use deque for self.to_crawl for efficient appends/pops from either end
+
         self.to_crawl = deque()
-        # Keep track of URLs currently in the queue to avoid duplicates in-memory
         self.urls_in_queue_set = set()
-        self.domains_in_queue_set = set() # NEW: Keep track of domains in queue
+        self.domains_in_queue_set = set() 
 
-        self.discovered_links = set() # All unique links ever discovered, managed in DB and memory
-        self.crawled_sites = {} # Managed in DB, but kept in memory for current crawl cycle efficiency
-        self.crawled_domains = set() # NEW: Keep track of domains that have been crawled
+        self.discovered_links = set()
+        self.crawled_sites = {}
+        self.crawled_domains = set()
 
-        # Load existing data from DB
         self._load_discovered_links()
         self._load_crawled_sites()
-        self._load_crawled_domains() # NEW: Load crawled domains
+        self._load_crawled_domains() 
 
-        # Initialize the to_crawl queue with unique seed URLs and previously discovered uncrawled links
-        initial_urls = set(seed_urls) # Ensure seed URLs are unique
+        initial_urls = set(seed_urls)
         for url in initial_urls:
-            domain = self._get_domain(url) # NEW: Get domain for initial URLs
+            domain = self._get_domain(url)
             if url not in self.crawled_sites or self.crawled_sites.get(url, {}).get("status") != "crawled":
                 self._add_to_crawl_queue(url, 0)
         print(f"{YELLOW}Initial to_crawl queue size: {len(self.to_crawl)}{RESET}")
 
 
     def _load_discovered_links(self):
-        """Loads discovered links from the database."""
         results = self.db_manager._execute_query(
             "SELECT url FROM discovered_onion_links", fetch_all=True
         )
@@ -358,7 +339,6 @@ class LinkCrawler(threading.Thread):
             print(f"{YELLOW}📂 No existing discovered .onion links in DB.{RESET}")
 
     def _load_crawled_sites(self):
-        """Loads crawled sites from the database."""
         results = self.db_manager._execute_query(
             "SELECT url, last_checked, response_time, result, status FROM crawled_sites", fetch_all=True
         )
@@ -370,7 +350,6 @@ class LinkCrawler(threading.Thread):
             print(f"{YELLOW}📂 No existing crawled sites in DB.{RESET}")
 
     def _load_crawled_domains(self):
-        """NEW: Loads crawled domains from the database by extracting them from crawled_sites.urls."""
         for url in self.crawled_sites.keys():
             domain = self._get_domain(url)
             if domain:
@@ -378,7 +357,6 @@ class LinkCrawler(threading.Thread):
         print(f"{YELLOW}📂 Loaded {len(self.crawled_domains)} crawled domains from DB.{RESET}")
 
     def save_crawled_site_status(self, url, last_checked, response_time, result, status):
-        """Saves or updates a crawled site's status in the database."""
         self.db_manager._execute_query(
             "INSERT OR REPLACE INTO crawled_sites (url, last_checked, response_time, result, status) VALUES (?, ?, ?, ?, ?)",
             (url, last_checked, response_time, result, status)
@@ -389,22 +367,20 @@ class LinkCrawler(threading.Thread):
             "result": result,
             "status": status
         }
-        domain = self._get_domain(url) # NEW: Add domain to crawled_domains
+        domain = self._get_domain(url)
         if domain:
             self.crawled_domains.add(domain) #
         print(f"{GREEN}💾 Saved crawled site status for {url}{RESET}")
 
     def save_discovered_link(self, url):
-        """Saves a discovered link to the database and adds to in-memory set."""
         self.db_manager._execute_query(
             "INSERT OR IGNORE INTO discovered_onion_links (url) VALUES (?)",
             (url,)
         )
-        self.discovered_links.add(url) # Add to the in-memory set
+        self.discovered_links.add(url)
         print(f"{GREEN}💾 Added {url} to discovered links in DB.{RESET}")
 
     def _get_domain(self, url):
-        """NEW: Extracts the domain from a URL."""
         try:
             return urlparse(url).netloc
         except Exception as e:
@@ -412,25 +388,16 @@ class LinkCrawler(threading.Thread):
             return None
 
     def _add_to_crawl_queue(self, url, depth):
-        """Adds a URL to the crawl queue if it's unique, not yet crawled, and its domain is new or not recently crawled."""
         decoded_url = unquote(url)
-        domain = self._get_domain(decoded_url) # NEW: Get domain for prioritization
+        domain = self._get_domain(decoded_url)
 
-        if not domain: # NEW: Skip if domain extraction fails
-            return False #
+        if not domain:
+            return False 
 
-        # Prioritize unique domains: Only add if the domain hasn't been crawled yet,
-        # or if it's a new URL within a domain that hasn't been crawled in a while (not explicitly handled here for simplicity,
-        # but could be added with a timestamp check in crawled_sites for the domain).
-        # For strict unique domain prioritization, if domain is already crawled, we might skip.
-        # Here, we allow new URLs within crawled domains, but prioritize *new* domains.
-        
-        # Check against NSFW keywords
         if self.contains_nsfw(decoded_url): #
             print(f"{RED}🚫 NSFW link detected, not adding to queue: {decoded_url}{RESET}") #
             return False #
 
-        # Check if the URL is already in the queue or has been crawled
         if decoded_url in self.urls_in_queue_set: #
             print(f"{YELLOW}🔄 Already in queue: {decoded_url}{RESET}") #
             return False #
@@ -439,30 +406,27 @@ class LinkCrawler(threading.Thread):
             print(f"{YELLOW}🔄 Already crawled: {decoded_url}{RESET}") #
             return False #
 
-        # Prioritize domains not yet crawled
-        if domain not in self.crawled_domains: #
-            self.to_crawl.appendleft((decoded_url, depth)) # Add to front for higher priority
-            self.urls_in_queue_set.add(decoded_url) #
-            self.domains_in_queue_set.add(domain) # Mark domain as in queue
-            self.save_discovered_link(decoded_url) #
+        if domain not in self.crawled_domains: 
+            self.to_crawl.appendleft((decoded_url, depth))
+            self.urls_in_queue_set.add(decoded_url)
+            self.domains_in_queue_set.add(domain)
+            self.save_discovered_link(decoded_url)
             print(f"{BLUE}➕ Added NEW DOMAIN URL to queue (high priority): {decoded_url} (depth: {depth}){RESET}") #
             return True #
         
-        # If the domain has been seen, but this specific URL is new and uncrawled, add to end of queue
-        elif decoded_url not in self.discovered_links: #
-            self.to_crawl.append((decoded_url, depth)) # Add to end for lower priority
-            self.urls_in_queue_set.add(decoded_url) #
-            self.save_discovered_link(decoded_url) #
+        elif decoded_url not in self.discovered_links:
+            self.to_crawl.append((decoded_url, depth))
+            self.urls_in_queue_set.add(decoded_url)
+            self.save_discovered_link(decoded_url)
             print(f"{BLUE}➕ Added unique URL from EXISTING DOMAIN to queue (low priority): {decoded_url} (depth: {depth}){RESET}") #
             return True #
         
-        else: # It's discovered but not in queue and not crawled - might be a candidate for requeue
+        else:
             print(f"{YELLOW}🔄 Discovered but not in queue and not crawled: {decoded_url}. Will consider for requeue.{RESET}") #
         return False #
 
 
     def sanitize_content(self, text):
-        """Sanitizes text by lowercasing, removing non-alphanumeric characters, and stopwords."""
         try:
             if not isinstance(text, str):
                 return ""
@@ -482,7 +446,6 @@ class LinkCrawler(threading.Thread):
             return ""
 
     def validate_url(self, url):
-        """Validates if a URL is a valid .onion address."""
         decoded_url = unquote(url)
         parsed = urlparse(decoded_url)
         if not parsed.scheme or not parsed.netloc:
@@ -490,14 +453,12 @@ class LinkCrawler(threading.Thread):
         return parsed.netloc.endswith('.onion')
 
     def exponential_backoff(self, retries):
-        """Calculates exponential backoff delay."""
         base_delay = 2
         max_delay = 45
         delay = min(max_delay, base_delay * math.pow(2, retries))
         return delay
 
     def contains_nsfw(self, text):
-        """Checks if the given text contains any NSFW keywords (case-insensitive)."""
         if not isinstance(text, str):
             return False
         text_lower = text.lower()
@@ -507,18 +468,14 @@ class LinkCrawler(threading.Thread):
         return False
 
     def crawl(self, url, depth, retries_left=None):
-        """Crawls a given URL, extracts content and links, and updates the database."""
         if retries_left is None:
             retries_left = self.retries
 
         decoded_url = unquote(url)
-        domain = self._get_domain(decoded_url) # NEW: Get domain for status update
+        domain = self._get_domain(decoded_url)
 
-        # Explicitly remove from queue set as it's now being processed
         if decoded_url in self.urls_in_queue_set:
             self.urls_in_queue_set.remove(decoded_url)
-        # Also remove domain from queue set if this is the last URL for that domain being processed from the initial batch
-        # (This is a simplification, a more robust check would be needed for complex domain management)
         if domain in self.domains_in_queue_set and not any(self._get_domain(u) == domain for u, _ in self.to_crawl):
             self.domains_in_queue_set.remove(domain)
 
@@ -577,14 +534,13 @@ class LinkCrawler(threading.Thread):
             print(f"{GREEN}✅ Crawling successful: {decoded_url}{RESET}")
 
             self.save_crawled_site_status(decoded_url, time.ctime(), elapsed_time, "success", "crawled")
-            self.crawled_domains.add(domain) # NEW: Mark this domain as crawled
+            self.crawled_domains.add(domain)
 
             found_links = set()
             for a_tag in soup.find_all('a', href=True):
                 link = a_tag['href']
                 decoded_link = unquote(link)
                 if self.validate_url(decoded_link):
-                    # Add to queue only if it's a new, unique, and non-NSFW link
                     if self._add_to_crawl_queue(decoded_link, depth + 1):
                         found_links.add(decoded_link)
                     else:
@@ -630,59 +586,48 @@ class LinkCrawler(threading.Thread):
                 if not self.to_crawl:
                     print(f"{YELLOW}🔄 to_crawl queue is empty. Repopulating...{RESET}")
                     
-                    # Reload discovered links and crawled sites to get the freshest data
                     self._load_discovered_links()
                     self._load_crawled_sites()
-                    self._load_crawled_domains() # NEW: Reload crawled domains
+                    self._load_crawled_domains()
 
                     newly_discovered_uncrawled = []
                     previously_failed_or_not_crawled = []
 
                     for url in self.discovered_links:
                         status = self.crawled_sites.get(url, {}).get("status")
-                        domain = self._get_domain(url) # NEW: Get domain for repopulation logic
+                        domain = self._get_domain(url)
 
-                        if domain and domain not in self.crawled_domains and url not in self.urls_in_queue_set: # Prioritize new domains
-                            newly_discovered_uncrawled.append((url, 0)) # Assuming depth 0 for these
+                        if domain and domain not in self.crawled_domains and url not in self.urls_in_queue_set: 
+                            newly_discovered_uncrawled.append((url, 0)) 
                         elif status != "crawled" and url not in self.urls_in_queue_set:
-                            # If it's a newly discovered link (not in crawled_sites yet, or status not "crawled")
-                            # and not already in the queue for the current cycle
-                            if url not in self.crawled_sites: # Truly new, never attempted
-                                newly_discovered_uncrawled.append((url, 0)) # Assuming depth 0 for these
-                            elif status in ["failed", "not crawled", "filtered", None]: # Previously attempted but failed/filtered, or no status
-                                previously_failed_or_not_crawled.append((url, 0)) # Re-add for retry
+                            if url not in self.crawled_sites:
+                                newly_discovered_uncrawled.append((url, 0))
+                            elif status in ["failed", "not crawled", "filtered", None]:
+                                previously_failed_or_not_crawled.append((url, 0))
 
-                    # Prioritize newly discovered, never attempted links (especially new domains)
                     random.shuffle(newly_discovered_uncrawled)
                     for url, depth in newly_discovered_uncrawled:
-                        if url not in self.urls_in_queue_set: # Double check before adding
-                            self._add_to_crawl_queue(url, depth) # Use the intelligent _add_to_crawl_queue
+                        if url not in self.urls_in_queue_set:
+                            self._add_to_crawl_queue(url, depth)
                             
-                    # Then add previously failed or not crawled links
                     random.shuffle(previously_failed_or_not_crawled)
                     for url, depth in previously_failed_or_not_crawled:
-                        if url not in self.urls_in_queue_set: # Double check before adding
-                            self._add_to_crawl_queue(url, depth) # Use the intelligent _add_to_crawl_queue
+                        if url not in self.urls_in_queue_set:
+                            self._add_to_crawl_queue(url, depth)
 
                     if not self.to_crawl:
                         print(f"{RED}❗ No more links to crawl and no new links discovered. Consider adding new seed URLs or restarting the crawler.{RESET}")
-                        time.sleep(60) # Long sleep if nothing to do
+                        time.sleep(60)
                         continue
                     else:
                         print(f"{GREEN}Queue repopulated with {len(self.to_crawl)} unique URLs.{RESET}")
                 
-                # Select a subset to crawl
                 subset_size = min(10, len(self.to_crawl))
-                # Use random.sample to get a random subset without modifying the deque order immediately
-                # Convert deque to list for random.sample
                 current_batch_urls_with_depth = random.sample(list(self.to_crawl), subset_size)
 
-                # Remove selected URLs from the deque for current processing
-                # This ensures that URLs are processed only once per batch and effectively popped
                 urls_to_process_now = set(url for url, _ in current_batch_urls_with_depth)
                 self.to_crawl = deque([item for item in self.to_crawl if item[0] not in urls_to_process_now])
                 self.urls_in_queue_set = set(url for url, _ in self.to_crawl)
-                # Rebuild domains_in_queue_set based on remaining URLs in queue
                 self.domains_in_queue_set = set(self._get_domain(url) for url, _ in self.to_crawl if self._get_domain(url))
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
@@ -708,7 +653,7 @@ class SearchEngineCrawler(threading.Thread):
         self.search_engines = search_engines
         self.db_manager = db_manager
         self.query_interval = query_interval
-        self.discovered_links = set() # Managed in DB, but kept in memory for current cycle
+        self.discovered_links = set()
         self.used_terms = set()
         self._load_discovered_links()
         self._load_used_terms()
@@ -724,8 +669,7 @@ class SearchEngineCrawler(threading.Thread):
                 url = row['url']
                 if self.contains_nsfw(url):
                     print(f"{RED}🚫 Removed NSFW link from discovered_onion_links in DB: {url}{RESET}")
-                    # Optionally delete from DB here if you want permanent removal
-                    # self.db_manager._execute_query("DELETE FROM discovered_onion_links WHERE url = ?", (url,))
+                    self.db_manager._execute_query("DELETE FROM discovered_onion_links WHERE url = ?", (url,))
                 else:
                     clean_links.append(url)
             self.discovered_links = set(clean_links)
@@ -734,9 +678,7 @@ class SearchEngineCrawler(threading.Thread):
             print(f"{YELLOW}📄 No existing discovered .onion links in DB.{RESET}")
 
     def _load_used_terms(self):
-        """Loads terms that have already been used for searching."""
-        # For simplicity, we'll just use all terms currently in the reverse index as 'used'
-        # In a real scenario, you might have a separate table for search terms and their usage status.
+
         self.used_terms = set(self.reverse_index_manager.get_all_terms())
         print(f"{YELLOW}Loaded {len(self.used_terms)} terms for search.{RESET}")
 
@@ -751,7 +693,7 @@ class SearchEngineCrawler(threading.Thread):
             "INSERT OR IGNORE INTO discovered_onion_links (url) VALUES (?)",
             (url,)
         )
-        self.discovered_links.add(url) # Add to the in-memory set
+        self.discovered_links.add(url)
 
     def contains_nsfw(self, text):
         """Checks if the given text contains any NSFW keywords (case-insensitive)."""
@@ -773,7 +715,7 @@ class SearchEngineCrawler(threading.Thread):
                 full_url = f"{search_engine_url}/search?q={quote(query)}"
                 print(f"{BLUE}🔍 Searching on {search_engine_url} for '{query}'{RESET}")
                 response = self.session.get(full_url, headers=headers, timeout=60)
-                response.raise_for_status() # Raise an exception for HTTP errors
+                response.raise_for_status()
 
                 onion_links = self.extract_onion_links(response.text)
                 new_links_count = 0
@@ -789,50 +731,51 @@ class SearchEngineCrawler(threading.Thread):
                 return new_links_count
             except requests.exceptions.RequestException as e:
                 print(f"{RED}❗ Error during search on {search_engine_url} for '{query}' (Attempt {attempt+1}/{retries}): {e}{RESET}")
-                time.sleep(self.exponential_backoff(attempt)) # Use exponential backoff for retries
+                time.sleep(self.exponential_backoff(attempt))
             except Exception as e:
                 print(f"{RED}❗ Unexpected error during search on {search_engine_url} for '{query}': {e}{RESET}")
-                break # Don't retry for unexpected errors
+                break
         return 0
 
     def run(self):
         while True:
             try:
                 all_terms = self.reverse_index_manager.get_all_terms()
-                search_terms = list(set(all_terms) - self.used_terms) # Only search for new terms
+                search_terms = list(set(all_terms) - self.used_terms)
 
                 if not search_terms:
                     print(f"{YELLOW}📄 No new search terms available. Waiting for new indexed content.{RESET}")
                     time.sleep(self.query_interval)
-                    self._load_used_terms() # Reload used terms periodically
+                    self._load_used_terms()
                     continue
 
-                # Select a random subset of terms to query
-                num_queries = min(5, len(search_terms)) # Limit number of queries per interval
+
+                num_queries = min(5, len(search_terms))
                 selected_terms = random.sample(search_terms, num_queries)
 
                 for term in selected_terms:
                     for engine in self.search_engines:
                         self.search_engine_query(engine, term)
-                        self.used_terms.add(term) # Mark term as used after query
-                        time.sleep(random.uniform(1, 3)) # Small random delay between engine queries
+                        self.used_terms.add(term)
+                        time.sleep(random.uniform(1, 3))
 
                 print(f"{BLUE}📝 Search cycle completed. Sleeping for {self.query_interval} seconds.{RESET}")
                 time.sleep(self.query_interval)
 
             except Exception as e:
                 print(f"{RED}❗ Error: SearchEngineCrawler encountered an error: {e}{RESET}")
-                time.sleep(self.query_interval / 10) # Shorter sleep on error
+                time.sleep(self.query_interval / 10)
 
 
 app = Flask(__name__)
-# Global managers
+
+############################
+
 db_manager = SQLiteManager()
 link_index_manager = LinkIndexManager(db_manager)
 reverse_index_manager = ReverseContentIndexManager(db_manager)
 relationship_manager = LinkRelationshipManager(db_manager)
 
-# Initial seed URLs for the crawler
 SEED_URLS = [
     "http://archiveemhz42hwt3eizqf4xyb6g72b7a2d4h4t4f4o4e4i6j2d6.onion",
     "http://darkfailenbsv6y5l.onion/",
@@ -1023,8 +966,6 @@ def search():
     if query:
         query_terms = query.split()
 
-        # Perform a basic AND search across all terms
-        # Get documents for each term
         docs_for_all_terms = defaultdict(lambda: {'score': 0, 'positions': []})
 
         if query_terms:
@@ -1033,15 +974,12 @@ def search():
                 docs_for_all_terms[doc_id]['score'] += len(positions) # Basic scoring
                 docs_for_all_terms[doc_id]['positions'].extend(positions)
 
-            # Intersect with other terms
             for i in range(1, len(query_terms)):
                 term = query_terms[i]
                 current_term_docs = reverse_index_manager.get_docs_for_term(term)
                 
-                # Find common documents
                 common_doc_ids = set(docs_for_all_terms.keys()) & set(current_term_docs.keys())
                 
-                # Update scores and positions for common documents, remove others
                 docs_for_all_terms_temp = defaultdict(lambda: {'score': 0, 'positions': []})
                 for doc_id in common_doc_ids:
                     docs_for_all_terms_temp[doc_id]['score'] = docs_for_all_terms[doc_id]['score'] + len(current_term_docs[doc_id])
@@ -1049,7 +987,6 @@ def search():
                     docs_for_all_terms_temp[doc_id]['positions'].extend(current_term_docs[doc_id])
                 docs_for_all_terms = docs_for_all_terms_temp
 
-        # Sort results by score (descending)
         sorted_doc_ids = sorted(docs_for_all_terms.keys(), key=lambda doc_id: docs_for_all_terms[doc_id]['score'], reverse=True)
 
         for doc_id in sorted_doc_ids:
@@ -1128,7 +1065,6 @@ def indexed_links():
 
 
 if __name__ == '__main__':
-    # Define the 5 Tor proxy configurations
     TOR_PROXIES = [
         {"port": 9021, "proxy_port": 9020},
         {"port": 9031, "proxy_port": 9030},
@@ -1145,53 +1081,48 @@ if __name__ == '__main__':
     crawler_threads = []
     search_engine_threads = []
 
-    # Create TorSession instances for each configuration
     for i, config in enumerate(TOR_PROXIES):
         print(f"{CYAN}Initializing TorSession {i+1}/{len(TOR_PROXIES)} for port {config['port']} and proxy port {config['proxy_port']}{RESET}")
         tor_session = TorSession(port=config['port'], proxy_port=config['proxy_port'])
         tor_sessions.append(tor_session)
-        # It's good practice to call connect here to ensure sessions are ready before starting crawlers
         tor_session.connect() 
 
-    # Create and start LinkCrawler threads, one for each TorSession
     for i, tor_session in enumerate(tor_sessions):
         crawler = LinkCrawler(
             tor_session=tor_session,
             link_index_manager=link_index_manager,
             reverse_index_manager=reverse_index_manager,
             relationship_manager=relationship_manager,
-            seed_urls=SEED_URLS, # All crawlers share the same seed URLs for initial discovery
+            seed_urls=SEED_URLS,
             db_manager=db_manager,
             depth=2,
             retries=1
         )
-        crawler.daemon = True # Allow the main program to exit even if threads are running
+        crawler.daemon = True
         crawler_threads.append(crawler)
         crawler.start()
         print(f"{GREEN}Started LinkCrawler thread {i+1} using TorSession on port {tor_session.port}{RESET}")
 
-    # Create and start SearchEngineCrawler threads, one for each TorSession
     for i, tor_session in enumerate(tor_sessions):
         search_crawler = SearchEngineCrawler(
             tor_session=tor_session,
             link_index_manager=link_index_manager,
             reverse_index_manager=reverse_index_manager,
-            search_engines=SEARCH_ENGINES, # All search crawlers share the same search engines
+            search_engines=SEARCH_ENGINES,
             db_manager=db_manager,
             query_interval=300
         )
-        search_crawler.daemon = True # Allow the main program to exit even if threads are running
+        search_crawler.daemon = True
         search_engine_threads.append(search_crawler)
         search_crawler.start()
         print(f"{GREEN}Started SearchEngineCrawler thread {i+1} using TorSession on port {tor_session.port}{RESET}")
 
     try:
         print(f"{GREEN}Starting Flask web server...{RESET}")
-        app.run(host='0.0.0.0', port=80, debug=False, use_reloader=False) # use_reloader=False when running with threads
+        app.run(host='0.0.0.0', port=80, debug=False, use_reloader=False)
     except KeyboardInterrupt:
         print(f"{YELLOW}Shutting down application.{RESET}")
     finally:
-        # Ensure database connection and Tor controllers are closed on exit
         for tor_session in tor_sessions:
             tor_session.close_controller()
         db_manager.close()
