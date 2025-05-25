@@ -1,4 +1,6 @@
-![BlackEye Search Logo](blackeye.png)
+<div align="center">
+  ![BlackEye Search Logo](blackeye.png)
+</div>
 
 # BlackEye Search: Tor-Enabled Web Crawler and Search Engine
 
@@ -83,4 +85,19 @@ Before running BlackEye Search, ensure you have the following installed:
     * `/crawled_sites`: Lists all sites that have been attempted to be crawled, along with their status.
     * `/indexed_links`: Lists all links that have been successfully indexed.
 
+## ⚙️ Configuration
 
+You can modify the following in `tor_crawl.py`:
+
+* **`SEED_URLS`**: A list of `.onion` URLs to start the crawling process from.
+* **`SEARCH_ENGINES`**: A list of `.onion` search engine URLs that the `SearchEngineCrawler` will query.
+* **`TOR_PROXIES`**: The list of control and SOCKS ports for your Tor instances. This must match the setup in `run_multiple_tors.sh`.
+* **`NSFW_KEYWORDS`**: Expand or modify this list to enhance or customize content filtering.
+
+## 🤝 Contributing
+
+Contributions are welcome! If you find a bug or have a feature request, please open an issue.
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
