@@ -1,6 +1,4 @@
-<div align="center">
-  ![BlackEye Search Logo](blackeye.png)
-</div>
+![BlackEye Search Logo](blackeye.png)
 
 # BlackEye Search: Tor-Enabled Web Crawler and Search Engine
 
