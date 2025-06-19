@@ -65,4 +65,3 @@ done
 echo ""
 echo "All Tor instances started. You can monitor them via their log files in $TOR_BASE_DIR/*/notices.log"
 echo "To stop them, you can use 'killall tor' or find their PIDs and kill them individually."
-echo "Each instance will use SocksPort $SOCKS_PORT and ControlPort $CONTROL_PORT."
