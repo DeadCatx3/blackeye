@@ -304,7 +304,7 @@
             {% if total_pages > 1 %}
                 <div class="pagination-links-container">
                     {% if page > 1 %}
-                        <a href="{{ url_for('search', q=query, page=page - 1, filter_nsfw=filter_nsfw)}}" class="pagination-link">Previous</a>
+                        <a href="{{ url_for('search', q=query, page=page - 1)}}" class="pagination-link">Previous</a>
                     {% else %}
                         <a href="#" class="pagination-link disabled">Previous</a>
                     {% endif %}
@@ -324,7 +324,7 @@
                         {% endif %}
 
                         {% if start_page > 1 %}
-                            <a href="{{ url_for('search', q=query, page=1, filter_nsfw=filter_nsfw) }}" class="pagination-link page-number-item">1</a>
+                            <a href="{{ url_for('search', q=query, page=1) }}" class="pagination-link page-number-item">1</a>
                             {% if start_page > 2 %}
                                 <span class="pagination-info page-number-item">...</span>
                             {% endif %}
@@ -334,7 +334,7 @@
                             {% if p == page %}
                                 <span class="pagination-info page-number-item">Current: {{ p }}</span>
                             {% else %}
-                                <a href="{{ url_for('search', q=query, page=p, filter_nsfw=filter_nsfw)}}" class="pagination-link page-number-item">{{ p }}</a>
+                                <a href="{{ url_for('search', q=query, page=p)}}" class="pagination-link page-number-item">{{ p }}</a>
                             {% endif %}
                         {% endfor %}
 
@@ -342,12 +342,12 @@
                             {% if end_page < total_pages - 1 %}
                                 <span class="pagination-info page-number-item">...</span>
                             {% endif %}
-                            <a href="{{ url_for('search', q=query, page=total_pages, filter_nsfw=filter_nsfw) }}" class="pagination-link page-number-item">{{ total_pages }}</a>
+                            <a href="{{ url_for('search', q=query, page=total_pages) }}" class="pagination-link page-number-item">{{ total_pages }}</a>
                         {% endif %}
                     </div>
 
                     {% if page < total_pages %}
-                        <a href="{{ url_for('search', q=query, page=page + 1, filter_nsfw=filter_nsfw)}}" class="pagination-link">Next</a>
+                        <a href="{{ url_for('search', q=query, page=page + 1)}}" class="pagination-link">Next</a>
                     {% else %}
                         <a href="#" class="pagination-link disabled">Next</a>
                     {% endif %}
@@ -355,7 +355,6 @@
 
                 <form action="{{ url_for('search') }}" method="GET" class="page-input-form">
                     <input type="hidden" name="q" value="{{ query }}">
-                    <input type="hidden" name="filter_nsfw" value="{{ 'on' if filter_nsfw else '' }}">
                     <label for="page_input" class="page-input-label">Go to page:</label>
                     <input type="number" id="page_input" name="page"
                            class="page-input"
