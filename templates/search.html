@@ -290,7 +290,7 @@
             {% if results %}
                 {% for result in results %}
                     <div class="result-card">
-                        <a href="{{ result.url }}" class="result-title" target="_blank" rel="noopener noreferrer">{{ result.title }}</a>
+                        <a href="{{ result.url }}" class="result-title" target="_blank" rel="noopener noreferrer">{{ (result.title if result.title is not none else "No Title")[:96] }}</a>
                         <div class="result-url">{{ result.url }}</div>
                         <div class="result-content">{{ result.content[:256] }}</div>
                     </div>
